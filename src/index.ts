@@ -25,6 +25,11 @@ import { getBlogs } from "./tools/getBlogs.js";
 import { updateBlog } from "./tools/updateBlog.js";
 import { getArticles } from "./tools/getArticles.js";
 import { updateArticle } from "./tools/updateArticle.js";
+import { getBlogById } from "./tools/getBlogById.js";
+import { getArticleById } from "./tools/getArticleById.js";
+import { createBlog } from "./tools/createBlog.js";
+import { createArticle } from "./tools/createArticle.js";
+import { searchShopify } from "./tools/searchShopify.js";
 
 // Parse command line arguments
 const argv = minimist(process.argv.slice(2));
@@ -85,6 +90,11 @@ getBlogs.initialize(shopifyClient);
 updateBlog.initialize(shopifyClient);
 getArticles.initialize(shopifyClient);
 updateArticle.initialize(shopifyClient);
+getBlogById.initialize(shopifyClient);
+getArticleById.initialize(shopifyClient);
+createBlog.initialize(shopifyClient);
+createArticle.initialize(shopifyClient);
+searchShopify.initialize(shopifyClient);
 
 // Set up MCP server
 const server = new McpServer({
@@ -420,6 +430,62 @@ server.tool(
   },
   async (args) => {
     const result = await updateArticle.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
+// Register new tools
+server.tool(
+  "get-blog-by-id",
+  getBlogById.schema.shape,
+  async (args: z.infer<typeof getBlogById.schema>) => {
+    const result = await getBlogById.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
+server.tool(
+  "get-article-by-id",
+  getArticleById.schema.shape,
+  async (args: z.infer<typeof getArticleById.schema>) => {
+    const result = await getArticleById.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
+server.tool(
+  "create-blog",
+  createBlog.schema.shape,
+  async (args: z.infer<typeof createBlog.schema>) => {
+    const result = await createBlog.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
+server.tool(
+  "create-article",
+  createArticle.schema.shape,
+  async (args: z.infer<typeof createArticle.schema>) => {
+    const result = await createArticle.execute(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result) }]
+    };
+  }
+);
+
+server.tool(
+  "search-shopify",
+  searchShopify.schema.shape,
+  async (args: z.infer<typeof searchShopify.schema>) => {
+    const result = await searchShopify.execute(args);
     return {
       content: [{ type: "text", text: JSON.stringify(result) }]
     };

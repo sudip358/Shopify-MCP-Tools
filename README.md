@@ -13,11 +13,12 @@ MCP Server for Shopify API, enabling interaction with store data through GraphQL
 
 ## Features
 
-- **Product Management**: Search and retrieve product information
+- **Product Management**: Search, retrieve, and update product information, including SEO-optimized content
 - **Customer Management**: Load customer data and manage customer tags
 - **Order Management**: Advanced order querying and filtering
-- **Blog Management**: Create and manage blog content and settings
-- **Article Management**: Author and update blog articles with rich content
+- **Blog Management**: Create, retrieve, and update blogs with custom templates and comment policies
+- **Article Management**: Create and manage blog articles with rich content, author information, and SEO metadata
+- **Store Search**: Unified search across products, articles, blogs, and pages
 - **GraphQL Integration**: Direct integration with Shopify's GraphQL Admin API
 - **Comprehensive Error Handling**: Clear error messages for API and authentication issues
 - **LLM-Optimized**: Designed for seamless use with AI language models
@@ -42,6 +43,7 @@ To use this MCP server, you'll need to create a custom app in your Shopify store
    - `read_products`, `write_products`
    - `read_customers`, `write_customers`
    - `read_orders`, `write_orders`
+   - `read_content`, `write_content` (for blogs and articles)
 7. Click **Save**
 8. Click **Install app**
 9. Click **Install** to give the app access to your store data
@@ -229,7 +231,33 @@ shopify-mcp --accessToken=<YOUR_ACCESS_TOKEN> --domain=<YOUR_SHOP>.myshopify.com
        - `templateSuffix`: Template suffix for custom themes
        - `commentPolicy`: Comment moderation policy
 
-2. `update-blog`
+2. `get-blog-by-id`
+
+   - Get a specific blog by ID with all its details
+   - Inputs:
+     - `blogId` (string, required): The GID of the blog to fetch (e.g., "gid://shopify/Blog/1234567890")
+   - Returns:
+     - Single blog object containing:
+       - `id`: Blog ID
+       - `title`: Blog title
+       - `handle`: URL-friendly handle
+       - `templateSuffix`: Template suffix for custom themes
+       - `commentPolicy`: Comment moderation policy
+       - `articles`: Recent articles in the blog
+
+3. `create-blog`
+
+   - Create a new blog
+   - Inputs:
+     - `title` (string, required): The title of the blog
+     - `handle` (string, optional): The URL-friendly handle for the blog. If not provided, it will be generated from the title.
+     - `templateSuffix` (string, optional): The template suffix for the blog
+     - `commentPolicy` (string, optional): The comment policy ("MODERATED" or "CLOSED")
+     - `seo` (object, optional): SEO metadata with `title` and `description` fields
+   - Returns:
+     - Created blog object containing all fields
+
+4. `update-blog`
 
    - Update a blog's details
    - Inputs:
@@ -261,7 +289,39 @@ shopify-mcp --accessToken=<YOUR_ACCESS_TOKEN> --domain=<YOUR_SHOP>.myshopify.com
        - `author`: Author information
        - `image`: Featured image details
 
-2. `update-article`
+2. `get-article-by-id`
+
+   - Get a specific article by ID with all its details
+   - Inputs:
+     - `articleId` (string, required): The GID of the article to fetch (e.g., "gid://shopify/Article/1234567890")
+   - Returns:
+     - Single article object containing:
+       - `id`: Article ID
+       - `title`: Article title
+       - `handle`: URL-friendly handle
+       - `body`: Article content
+       - `summary`: Article summary
+       - `tags`: Array of tags
+       - `author`: Author information
+       - `image`: Featured image details
+
+3. `create-article`
+
+   - Create a new article in a blog
+   - Inputs:
+     - `blogId` (string, required): The GID of the blog to create the article in
+     - `title` (string, required): The title of the article
+     - `content` (string, required): The content of the article in HTML format
+     - `author` (object, required): Author information with required `name` field, optional `email` and `bio`
+     - `handle` (string, optional): The URL-friendly handle for the article
+     - `published` (boolean, optional): Whether to publish the article immediately
+     - `publishedAt` (string, optional): The date and time to publish the article (ISO 8601 format)
+     - `tags` (array of strings, optional): Tags for the article
+     - `seo` (object, optional): SEO metadata with `title` and `description` fields
+   - Returns:
+     - Created article object containing all fields
+
+4. `update-article`
 
    - Update an article's content and metadata
    - Inputs:
@@ -272,9 +332,24 @@ shopify-mcp --accessToken=<YOUR_ACCESS_TOKEN> --domain=<YOUR_SHOP>.myshopify.com
      - `tags` (array of strings, optional): Tags for the article
      - `author` (object, optional): Author information with `name` field
    - Returns:
-     - Updated article object containing:
-       - All modified fields
-       - Additional metadata like handle, image, and timestamps
+     - Updated article object containing all modified fields
+
+### Store Search
+
+1. `search-shopify`
+
+   - Search across all content types in the Shopify store
+   - Inputs:
+     - `query` (string, required): The search query to find content across the store
+     - `types` (array of strings, optional): Types of resources to search for ("ARTICLE", "BLOG", "PAGE", "PRODUCT"). If not specified, searches all types.
+     - `first` (number, optional, default: 10, max: 50): Number of results to return
+   - Returns:
+     - Array of search results, each containing:
+       - `id`: Resource ID
+       - `title`: Resource title
+       - `handle`: URL-friendly handle
+       - `type`: Resource type
+       - Additional fields based on resource type
 
 ### Using MCP Tools with LLMs (AI Usage Guide)
 
