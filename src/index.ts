@@ -8,14 +8,8 @@ import minimist from "minimist";
 import { z } from "zod";
 
 // Import tools
-import { getCustomerOrders } from "./tools/getCustomerOrders.js";
-import { getCustomers } from "./tools/getCustomers.js";
-import { getOrderById } from "./tools/getOrderById.js";
-import { getOrders } from "./tools/getOrders.js";
 import { getProductById } from "./tools/getProductById.js";
 import { getProducts } from "./tools/getProducts.js";
-import { updateCustomer } from "./tools/updateCustomer.js";
-import { updateOrder } from "./tools/updateOrder.js";
 import { updateProduct } from "./tools/updateProduct.js";
 import { getCollections } from "./tools/getCollections.js";
 import { updateCollection } from "./tools/updateCollection.js";
@@ -27,9 +21,8 @@ import { getArticles } from "./tools/getArticles.js";
 import { updateArticle } from "./tools/updateArticle.js";
 import { getBlogById } from "./tools/getBlogById.js";
 import { getArticleById } from "./tools/getArticleById.js";
-import { createBlog } from "./tools/createBlog.js";
-import { createArticle } from "./tools/createArticle.js";
 import { searchShopify } from "./tools/searchShopify.js";
+import { createArticle } from "./tools/createArticle.js";
 
 // Parse command line arguments
 const argv = minimist(process.argv.slice(2));
@@ -72,15 +65,9 @@ const shopifyClient = new GraphQLClient(
   }
 );
 
-// Initialize tools with shopifyClient
+// Initialize tools with GraphQL client
 getProducts.initialize(shopifyClient);
 getProductById.initialize(shopifyClient);
-getOrders.initialize(shopifyClient);
-getOrderById.initialize(shopifyClient);
-getCustomers.initialize(shopifyClient);
-getCustomerOrders.initialize(shopifyClient);
-updateOrder.initialize(shopifyClient);
-updateCustomer.initialize(shopifyClient);
 updateProduct.initialize(shopifyClient);
 getCollections.initialize(shopifyClient);
 updateCollection.initialize(shopifyClient);
@@ -92,9 +79,8 @@ getArticles.initialize(shopifyClient);
 updateArticle.initialize(shopifyClient);
 getBlogById.initialize(shopifyClient);
 getArticleById.initialize(shopifyClient);
-createBlog.initialize(shopifyClient);
-createArticle.initialize(shopifyClient);
 searchShopify.initialize(shopifyClient);
+createArticle.initialize(shopifyClient);
 
 // Set up MCP server
 const server = new McpServer({
@@ -132,168 +118,6 @@ server.tool(
   }
 );
 
-server.tool(
-  "get-customers",
-  {
-    searchQuery: z.string().optional(),
-    limit: z.number().default(10)
-  },
-  async (args) => {
-    const result = await getCustomers.execute(args);
-    return {
-      content: [{ type: "text", text: JSON.stringify(result) }]
-    };
-  }
-);
-
-server.tool(
-  "get-orders",
-  {
-    status: z.enum(["any", "open", "closed", "cancelled"]).default("any"),
-    limit: z.number().default(10)
-  },
-  async (args) => {
-    const result = await getOrders.execute(args);
-    return {
-      content: [{ type: "text", text: JSON.stringify(result) }]
-    };
-  }
-);
-
-// Add the getOrderById tool
-server.tool(
-  "get-order-by-id",
-  {
-    orderId: z.string().min(1)
-  },
-  async (args) => {
-    const result = await getOrderById.execute(args);
-    return {
-      content: [{ type: "text", text: JSON.stringify(result) }]
-    };
-  }
-);
-
-// Add the updateOrder tool
-server.tool(
-  "update-order",
-  {
-    id: z.string().min(1),
-    tags: z.array(z.string()).optional(),
-    email: z.string().email().optional(),
-    note: z.string().optional(),
-    customAttributes: z
-      .array(
-        z.object({
-          key: z.string(),
-          value: z.string()
-        })
-      )
-      .optional(),
-    metafields: z
-      .array(
-        z.object({
-          id: z.string().optional(),
-          namespace: z.string().optional(),
-          key: z.string().optional(),
-          value: z.string(),
-          type: z.string().optional()
-        })
-      )
-      .optional(),
-    shippingAddress: z
-      .object({
-        address1: z.string().optional(),
-        address2: z.string().optional(),
-        city: z.string().optional(),
-        company: z.string().optional(),
-        country: z.string().optional(),
-        firstName: z.string().optional(),
-        lastName: z.string().optional(),
-        phone: z.string().optional(),
-        province: z.string().optional(),
-        zip: z.string().optional()
-      })
-      .optional()
-  },
-  async (args) => {
-    const result = await updateOrder.execute(args);
-    return {
-      content: [{ type: "text", text: JSON.stringify(result) }]
-    };
-  }
-);
-
-// Add the getCustomerOrders tool
-server.tool(
-  "get-customer-orders",
-  {
-    customerId: z
-      .string()
-      .regex(/^\d+$/, "Customer ID must be numeric")
-      .describe("Shopify customer ID, numeric excluding gid prefix"),
-    limit: z.number().default(10)
-  },
-  async (args) => {
-    const result = await getCustomerOrders.execute(args);
-    return {
-      content: [{ type: "text", text: JSON.stringify(result) }]
-    };
-  }
-);
-
-// Add the updateCustomer tool
-server.tool(
-  "update-customer",
-  {
-    id: z
-      .string()
-      .regex(/^\d+$/, "Customer ID must be numeric")
-      .describe("Shopify customer ID, numeric excluding gid prefix"),
-    firstName: z.string().optional(),
-    lastName: z.string().optional(),
-    email: z.string().email().optional(),
-    phone: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-    note: z.string().optional(),
-    taxExempt: z.boolean().optional(),
-    metafields: z
-      .array(
-        z.object({
-          id: z.string().optional(),
-          namespace: z.string().optional(),
-          key: z.string().optional(),
-          value: z.string(),
-          type: z.string().optional()
-        })
-      )
-      .optional()
-  },
-  async (args) => {
-    const result = await updateCustomer.execute(args);
-    return {
-      content: [{ type: "text", text: JSON.stringify(result) }]
-    };
-  }
-);
-
-// Add the updateProduct tool
-server.tool(
-  "update-product",
-  {
-    productId: z.string().min(1).describe("The GID of the product to update (e.g., \"gid://shopify/Product/1234567890\")"),
-    title: z.string().optional().describe("The new title for the product"),
-    descriptionHtml: z.string().optional().describe("The new HTML description for the product")
-  },
-  async (args) => {
-    const result = await updateProduct.execute(args);
-    return {
-      content: [{ type: "text", text: JSON.stringify(result) }]
-    };
-  }
-);
-
-// Add the getCollections tool
 server.tool(
   "get-collections",
   {
@@ -460,10 +284,10 @@ server.tool(
 );
 
 server.tool(
-  "create-blog",
-  createBlog.schema.shape,
-  async (args: z.infer<typeof createBlog.schema>) => {
-    const result = await createBlog.execute(args);
+  "search-shopify",
+  searchShopify.schema.shape,
+  async (args: z.infer<typeof searchShopify.schema>) => {
+    const result = await searchShopify.execute(args);
     return {
       content: [{ type: "text", text: JSON.stringify(result) }]
     };
@@ -481,11 +305,36 @@ server.tool(
   }
 );
 
+// Add the updateProduct tool
 server.tool(
-  "search-shopify",
-  searchShopify.schema.shape,
-  async (args: z.infer<typeof searchShopify.schema>) => {
-    const result = await searchShopify.execute(args);
+  "update-product",
+  {
+    productId: z.string().min(1).describe("The GID of the product to update (e.g., \"gid://shopify/Product/1234567890\")"),
+    title: z.string().optional().describe("The new title for the product"),
+    descriptionHtml: z.string().optional().describe("The new HTML description for the product"),
+    seo: z.object({
+      title: z.string().optional().describe("SEO-optimized title for the product"),
+      description: z.string().optional().describe("SEO meta description for the product")
+    }).optional().describe("SEO information for the product"),
+    status: z.enum(["ACTIVE", "ARCHIVED", "DRAFT"]).optional().describe("Product status (ACTIVE, ARCHIVED, or DRAFT)"),
+    vendor: z.string().optional().describe("The vendor or manufacturer of the product"),
+    productType: z.string().optional().describe("The type or category of the product"),
+    tags: z.array(z.string()).optional().describe("Array of tags to categorize the product"),
+    variants: z.array(z.object({
+      id: z.string().optional().describe("The GID of the variant to update"),
+      price: z.string().optional().describe("The price of the variant"),
+      compareAtPrice: z.string().optional().describe("Compare at price for showing a markdown"),
+      sku: z.string().optional().describe("Stock keeping unit (SKU)"),
+      barcode: z.string().optional().describe("Barcode (ISBN, UPC, GTIN, etc.)"),
+      inventoryQuantity: z.number().optional().describe("Available inventory quantity"),
+      inventoryPolicy: z.enum(["DENY", "CONTINUE"]).optional().describe("What happens when a variant is out of stock"),
+      fulfillmentService: z.string().optional().describe("Service responsible for fulfilling the variant"),
+      weight: z.number().optional().describe("Weight of the variant"),
+      weightUnit: z.enum(["KILOGRAMS", "GRAMS", "POUNDS", "OUNCES"]).optional().describe("Unit of weight measurement")
+    })).optional().describe("Product variants to update")
+  },
+  async (args) => {
+    const result = await updateProduct.execute(args);
     return {
       content: [{ type: "text", text: JSON.stringify(result) }]
     };

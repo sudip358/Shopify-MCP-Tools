@@ -5,7 +5,10 @@ import { z } from "zod";
 // Input schema for getProducts
 const GetProductsInputSchema = z.object({
   searchTitle: z.string().optional().describe("Optional search term to filter products by title"),
-  limit: z.number().default(10).describe("Maximum number of products to return (default: 10)")
+  limit: z.number().default(10).describe("Maximum number of products to return (default: 10)"),
+  after: z.string().optional().describe("Cursor for pagination - get items after this cursor"),
+  before: z.string().optional().describe("Cursor for pagination - get items before this cursor"),
+  reverse: z.boolean().optional().default(false).describe("Reverse the order of the returned products")
 });
 
 type GetProductsInput = z.infer<typeof GetProductsInputSchema>;
@@ -14,12 +17,12 @@ type GetProductsInput = z.infer<typeof GetProductsInputSchema>;
 let shopifyClient: GraphQLClient;
 
 /**
- * Tool for fetching multiple products with their details
- * @returns {Object} List of products with their details including SEO-relevant fields
+ * Tool for fetching multiple products with their details and navigation support
+ * @returns {Object} List of products with their details including SEO-relevant fields and pagination info
  */
 const getProducts = {
   name: "get-products",
-  description: "Get all products or search by title, including SEO-relevant fields like title and description",
+  description: "Get all products or search by title, including SEO-relevant fields and pagination support",
   schema: GetProductsInputSchema,
 
   // Add initialize method to set up the GraphQL client
@@ -29,13 +32,34 @@ const getProducts = {
 
   execute: async (input: GetProductsInput) => {
     try {
-      const { searchTitle, limit } = input;
+      const { searchTitle, limit, after, before, reverse } = input;
 
       // Create query based on whether we're searching by title or not
       const query = gql`
-        query GetProducts($first: Int!, $query: String) {
-          products(first: $first, query: $query) {
+        query GetProducts(
+          $first: Int
+          $last: Int
+          $after: String
+          $before: String
+          $query: String
+          $reverse: Boolean
+        ) {
+          products(
+            first: $first
+            last: $last
+            after: $after
+            before: $before
+            query: $query
+            reverse: $reverse
+          ) {
+            pageInfo {
+              hasNextPage
+              hasPreviousPage
+              startCursor
+              endCursor
+            }
             edges {
+              cursor
               node {
                 id
                 title
@@ -82,16 +106,31 @@ const getProducts = {
       `;
 
       const variables = {
-        first: limit,
-        query: searchTitle ? `title:*${searchTitle}*` : undefined
+        first: before ? undefined : limit,
+        last: before ? limit : undefined,
+        after,
+        before,
+        query: searchTitle ? `title:*${searchTitle}*` : undefined,
+        reverse
       };
 
       const data = (await shopifyClient.request(query, variables)) as {
-        products: any;
+        products: {
+          pageInfo: {
+            hasNextPage: boolean;
+            hasPreviousPage: boolean;
+            startCursor: string;
+            endCursor: string;
+          };
+          edges: Array<{
+            cursor: string;
+            node: any;
+          }>;
+        };
       };
 
       // Extract and format product data
-      const products = data.products.edges.map((edge: any) => {
+      const products = data.products.edges.map((edge) => {
         const product = edge.node;
 
         // Format variants
@@ -142,11 +181,20 @@ const getProducts = {
             }
           },
           imageUrl,
-          variants
+          variants,
+          cursor: edge.cursor
         };
       });
 
-      return { products };
+      return {
+        products,
+        pageInfo: {
+          hasNextPage: data.products.pageInfo.hasNextPage,
+          hasPreviousPage: data.products.pageInfo.hasPreviousPage,
+          startCursor: data.products.pageInfo.startCursor,
+          endCursor: data.products.pageInfo.endCursor
+        }
+      };
     } catch (error) {
       console.error("Error fetching products:", error);
       throw new Error(
