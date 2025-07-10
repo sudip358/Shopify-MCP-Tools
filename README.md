@@ -7,9 +7,7 @@ MCP Server for Shopify API, enabling interaction with store data through GraphQL
 **📦 Package Name: `best-shopify-mcp`**  
 **🚀 Command: `best-shopify-mcp` (NOT `best-shopify-mcp-server`)**
 
-<a href="https://glama.ai/mcp/servers/@GeLi2001/best-shopify-mcp">
-  <img width="380" height="200" src="https://glama.ai/mcp/servers/@GeLi2001/best-shopify-mcp/badge" alt="Shopify MCP server" />
-</a>
+
 
 ## Features
 
