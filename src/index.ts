@@ -95,7 +95,10 @@ server.tool(
   "get-products",
   {
     searchTitle: z.string().optional(),
-    limit: z.number().default(10)
+    limit: z.number().default(10),
+    after: z.string().optional(),
+    before: z.string().optional(),
+    reverse: z.boolean().default(false)
   },
   async (args) => {
     const result = await getProducts.execute(args);

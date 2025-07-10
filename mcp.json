@@ -1,14 +1,12 @@
 {
-    
-        "shopify-mcp": {
-            "command": "npx",
-            "args": [
-                "shopify-mcp",
-                "--accessToken",
-                "<YOUR_SHOPIFY_ACCESS_TOKEN>",
-                "--domain",
-                "<YOUR_SHOP>.myshopify.com"
-            ]
-        }
-    }
-} 
+  "best-shopify-mcp": {
+    "command": "npx",
+    "args": [
+      "best-shopify-mcp",
+      "--accessToken",
+      "<YOUR_SHOPIFY_ACCESS_TOKEN>",
+      "--domain",
+      "<YOUR_SHOP>.myshopify.com"
+    ]
+  }
+}

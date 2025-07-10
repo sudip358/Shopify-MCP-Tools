@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "shopify-local-dev": {
+      "command": "node",
+      "args": [
+        "--loader",
+        "ts-node/esm",
+        "src/index.ts"
+      ],
+      "cwd": "c:/Users/Admin/vs_code/Shopify-MCP"
+    }
+  }
+}
